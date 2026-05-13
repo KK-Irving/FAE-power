@@ -1,0 +1,21 @@
+{
+  "name": "fae-skill",
+  "version": "1.0.0",
+  "description": "FAE Skill - Professional workflow assistant for Android TV FAE engineers",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:property": "vitest run --reporter=verbose tests/property",
+    "test:unit": "vitest run --reporter=verbose tests/unit",
+    "test:integration": "vitest run --reporter=verbose tests/integration"
+  },
+  "devDependencies": {
+    "fast-check": "^3.15.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  },
+  "keywords": ["fae", "android-tv", "workflow", "kiro-skill"],
+  "license": "UNLICENSED"
+}
