@@ -1,7 +1,7 @@
 ---
 name: "fae-power"
 displayName: "FAE Workflow Assistant"
-description: "面向 Android TV FAE 工程师的专业工作流助手。提供技术问答、问题完整性检查、日志收集指导、Zmind 工单管理、客户沟通生成、风险评估和知识库集成。"
+description: "面向 Android TV FAE 工程师的专业工作流助手。提供技术问答、问题完整性检查、日志收集指导、Zmind 工单管理、客户沟通生成、风险评估和文档/知识查询。"
 keywords: ["fae", "android-tv", "zmind", "客户支持", "问题管理", "技术支持", "工单", "knowledge"]
 author: "WhaleTV FAE Team"
 ---
@@ -28,7 +28,7 @@ FAE Power 不是一个普通问答助手，而是 Android TV FAE 的问题处理
 | 5 | 客户沟通生成 | 中英双语专业话术，覆盖 6 种沟通场景 |
 | 6 | 风险评估 | P0-P4 标准化定级，含升级建议 |
 | 7 | 工作流编排 | 12 阶段标准流程引导（从接收到闭环） |
-| 8 | 知识库集成 | 问题沉淀和相似问题检索 |
+| 8 | 知识/文档查询 | 内部文档搜索和相似问题检索 |
 
 ### 支持的 Android TV 子系统
 
@@ -44,23 +44,30 @@ FAE Power 不是一个普通问答助手，而是 Android TV FAE 的问题处理
 |-------|-----------|------|
 | **whaletv-dev-power** | zmind-mcp-server (14 tools) | Zmind 工单 CRUD、状态管理、工时记录 |
 | **whaletv-dev-power** | opengrok-mcp-server (2 tools) | 源代码搜索，技术问题代码级调查 |
-| **zmind-knowledge-manager** | zmind-knowledge-manager (知识库工具) | 知识库搜索、存储、相似度匹配 |
+| **whaletv-dev-power** | internal-docs skill (Confluence CQL) | 内部文档搜索，历史问题和解决方案查询 |
 
-> ⚠️ **重要**: 请确保 `whaletv-dev-power` 和 `zmind-knowledge-manager` 已安装并正确配置 API 密钥，否则部分功能将以降级模式运行。
+> ⚠️ **重要**: 请确保 `whaletv-dev-power` 已安装并正确配置 API 密钥和 Confluence 凭据，否则部分功能将以降级模式运行。
 
 ### 环境要求
 
 - Kiro IDE
 - whaletv-dev-power 已安装且 zmind-mcp-server 已启用
-- zmind-knowledge-manager Power 已安装（可选，用于知识库功能）
+- Confluence 凭据已配置（用于内部文档查询）
 
 ## Available Steering Files
 
-本 Power 包含以下工作流指南：
+本 Power 包含以下工作流指南，按需加载：
 
 | Steering File | 说明 | 触发示例 |
 |---------------|------|----------|
-| **fae-skill.md** | 完整的 FAE 工作流行为指导（核心文件） | "客户反馈 YouTube 黑屏"、"检查问题完整性"、"评估风险" |
+| **fae-workflow.md** | 核心：AI 身份定义 + 能力路由 + 12 阶段工作流 | "开始工作流"、"新问题接入" |
+| **technical-qa.md** | 技术问答引擎（13 子系统诊断分析） | "WiFi 频繁断连如何排查" |
+| **log-advisor.md** | 日志收集指导（7 问题类型 + ADB 命令） | "播放问题需要什么日志" |
+| **completeness-checker.md** | 问题完整性检查规则 | "检查这个问题描述是否完整" |
+| **risk-assessor.md** | 风险评估 P0-P4 分级 | "评估这个问题的优先级" |
+| **zmind-interface.md** | Zmind 工单管理（创建/状态/动作） | "帮我创建 Zmind 工单" |
+| **communication-generator.md** | 客户沟通生成 + 文档/知识查询 | "生成进度更新邮件" |
+| **mcp-integration.md** | MCP 服务器调用规则和降级策略 | （自动生效） |
 
 ### 使用方式
 
@@ -73,7 +80,7 @@ FAE Power 不是一个普通问答助手，而是 Android TV FAE 的问题处理
 - **客户沟通**: "生成一封进度更新邮件"
 - **风险评估**: "评估这个问题的优先级"
 - **工作流**: "开始工作流" / "新问题接入"
-- **知识库**: "搜索类似的历史问题"
+- **知识/文档查询**: "搜索类似的历史问题"
 
 ## MCP Tool Usage
 
@@ -105,14 +112,17 @@ search_code(query="MediaCodec decode error")
 search_symbol(symbol="VideoDecoderService")
 ```
 
-### 通过 zmind-knowledge-manager 使用的工具
+#### 内部文档查询
+
+通过 whaletv-dev-power 的 internal-docs skill，使用 Confluence CQL 搜索内部技术文档、已知问题和解决方案。
 
 ```
-# 搜索相似历史问题
-（通过 zmind-knowledge-manager Power 的工具搜索知识库）
+# 搜索内部文档
+GET https://docs.whaletv.com/rest/api/content/search?cql=text~"<keyword>"&limit=5
+Auth: HTTP Basic Auth
 
-# 存储知识条目
-（问题闭环后自动生成并存储）
+# 获取页面正文
+GET /rest/api/content/<page_id>?expand=body.view
 ```
 
 ## Standard Workflow
@@ -154,13 +164,13 @@ FAE 标准问题处理流程（12 阶段）：
 | 服务不可用 | 降级行为 |
 |-----------|----------|
 | zmind-mcp-server | 生成工单内容但不提交，提供本地保存格式 |
-| zmind-knowledge-manager | 使用内置知识提供技术指导，跳过历史问题引用 |
+| docs.whaletv.com (Confluence) | 跳过文档查询，基于内置子系统知识提供指导 |
 | opengrok-mcp-server | 跳过代码搜索，基于子系统知识提供指导 |
 
 ## Best Practices
 
 1. **先检查完整性再建单** — 确保信息齐全后再提交 Zmind，避免反复补充
-2. **善用知识库** — 新问题先搜索历史案例，避免重复排查
+2. **善用内部文档** — 新问题先搜索历史案例，避免重复排查
 3. **及时沉淀** — 问题闭环后立即生成复盘，趁记忆清晰
 4. **风险前置** — 接到问题第一时间评估风险，P0/P1 立即升级
 5. **双语沟通** — 对外客户沟通始终提供中英双语版本
@@ -176,14 +186,15 @@ FAE 标准问题处理流程（12 阶段）：
 2. 确认 ZMIND_API_KEY 已正确配置
 3. 确认网络可达 zmind.whaletv.com
 
-### 知识库搜索无结果
+### 文档搜索无结果
 
-**现象**: 搜索知识库始终返回空
+**现象**: 搜索内部文档始终返回空
 
 **排查**:
-1. 确认 zmind-knowledge-manager Power 已安装
-2. 确认知识库中已有数据（需要先沉淀一些问题）
-3. 尝试使用更宽泛的关键词搜索
+1. 确认 Confluence 凭据已正确配置（HTTP Basic Auth）
+2. 确认网络可达 docs.whaletv.com
+3. 确认 Confluence 中已有相关文档数据
+4. 尝试使用更宽泛的关键词搜索
 
 ### 代码搜索不可用
 

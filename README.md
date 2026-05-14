@@ -21,44 +21,38 @@ FAE Power 是一个面向 Android TV 产品 FAE（Field Application Engineer）�
 FAE-power/
 ├── POWER.md                              # Kiro Power 元数据 + 概览文档
 ├── README.md                             # 本文件
-├── LICENSE                               # 许可证（UNLICENSED - 内部使用）
+├── LICENSE                               # 许可证声明
 ├── steering/
-│   └── fae-skill.md                      # 核心 steering file（1046行 FAE 工作流指导）
-├── src/
-│   ├── types/
-│   │   └── index.ts                      # 完整类型定义（13 接口 + 7 联合类型）
-│   └── utils/
-│       ├── completeness-checker.ts       # 问题完整性检查逻辑
-│       ├── risk-assessor.ts              # 风险评估与 P0-P4 分级
-│       ├── title-generator.ts            # Zmind 工单标题生成
-│       ├── ticket-validator.ts           # 工单字段验证与描述生成
-│       ├── workflow-state.ts             # 12 阶段工作流状态管理
-│       └── response-validator.ts         # 响应结构验证
-├── tests/
-│   ├── unit/                             # 单元测试
-│   ├── property/                         # 属性测试（fast-check）
-│   └── integration/                      # 集成测试
-├── .kiro/
-│   ├── skills/fae-skill.md               # 本地开发用 skill 副本
-│   └── specs/fae-skill/                  # Spec 文档（需求/设计/任务）
-├── package.json
-├── tsconfig.json
-├── vitest.config.ts
-└── .gitignore
+│   ├── fae-workflow.md                   # 核心：AI 身份 + 能力路由 + 工作流编排
+│   ├── technical-qa.md                   # 技术问答引擎（13 子系统）
+│   ├── log-advisor.md                    # 日志收集指导（7 问题类型）
+│   ├── completeness-checker.md           # 问题完整性检查
+│   ├── risk-assessor.md                  # 风险评估 P0-P4
+│   ├── zmind-interface.md                # Zmind 工单管理
+│   ├── communication-generator.md        # 客户沟通 + 文档/知识查询
+│   └── mcp-integration.md               # MCP 调用规则与降级策略
+├── dev/                                  # 开发参考（逻辑验证模块）
+│   ├── src/types/index.ts                # 类型定义
+│   ├── src/utils/                        # 工具模块（可测试逻辑）
+│   ├── tests/                            # 测试套件
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── vitest.config.ts
+└── .kiro/specs/                          # Spec 文档（需求/设计/任务）
 ```
 
 ## 核心能力
 
-| # | 能力模块 | 说明 |
-|---|---------|------|
-| 1 | **技术问答** | 覆盖 13 个 Android TV 子系统的结构化诊断分析 |
-| 2 | **完整性检查** | 自动验证客户问题报告是否包含必要信息，输出完整度评分 |
-| 3 | **日志收集指导** | 按 7 种问题类型推荐具体日志和可复制的 ADB 命令 |
-| 4 | **Zmind 工单管理** | 自动生成标准化标题/描述，9 种状态的下一步动作建议 |
-| 5 | **客户沟通生成** | 中英双语专业话术，覆盖 6 种沟通场景 |
-| 6 | **风险评估** | 7 维度评估 + P0-P4 标准化定级 + 升级建议 |
-| 7 | **工作流编排** | 12 阶段标准流程引导（支持前进/跳过/回退） |
-| 8 | **知识库集成** | 问题沉淀（8 字段结构化）和相似问题检索（Top 5） |
+| # | 能力模块 | 说明 | Steering File |
+|---|---------|------|---------------|
+| 1 | **技术问答** | 覆盖 13 个 Android TV 子系统的结构化诊断分析 | `technical-qa.md` |
+| 2 | **完整性检查** | 自动验证客户问题报告是否包含必要信息，输出完整度评分 | `completeness-checker.md` |
+| 3 | **日志收集指导** | 按 7 种问题类型推荐具体日志和可复制的 ADB 命令 | `log-advisor.md` |
+| 4 | **Zmind 工单管理** | 自动生成标准化标题/描述，9 种状态的下一步动作建议 | `zmind-interface.md` |
+| 5 | **客户沟通生成** | 中英双语专业话术，覆盖 6 种沟通场景 | `communication-generator.md` |
+| 6 | **风险评估** | 7 维度评估 + P0-P4 标准化定级 + 升级建议 | `risk-assessor.md` |
+| 7 | **工作流编排** | 12 阶段标准流程引导（支持前进/跳过/回退） | `fae-workflow.md` |
+| 8 | **文档/知识查询** | 搜索内部文档（Confluence），查找历史问题和解决方案 | `communication-generator.md` |
 
 ### 支持的 Android TV 子系统（13 个）
 
@@ -78,16 +72,6 @@ FAE-power/
 | 工厂模式/量产 | 产线测试、烧录、自动化 |
 | 客户定制 | UI 定制、功能裁剪、品牌 |
 
-### 风险等级定义
-
-| 等级 | 判定条件 | 典型场景 |
-|------|----------|----------|
-| P0 | 阻塞出货/量产，核心功能100%必现 | 重点客户设备无法开机 |
-| P1 | 影响认证/客户验收，核心功能 | 认证测试中播放功能异常 |
-| P2 | 有规避方案，不阻塞出货/认证 | 非关键路径问题 |
-| P3 | 非核心功能，复现率<50% | 偶发设置界面显示异常 |
-| P4 | 咨询/配置类，无功能缺陷 | 客户询问功能配置方法 |
-
 ## 安装
 
 ### 前置条件
@@ -95,8 +79,7 @@ FAE-power/
 | 依赖 | 说明 |
 |------|------|
 | [Kiro IDE](https://kiro.dev) | AI 开发环境 |
-| [whaletv-dev-power](https://github.com/KK-Irving/whaletv-dev-power) | 提供 zmind-mcp-server 和 opengrok-mcp-server |
-| zmind-knowledge-manager | 提供知识库搜索和存储能力（可选） |
+| [whaletv-dev-power](https://github.com/KK-Irving/whaletv-dev-power) | 提供 zmind-mcp-server、opengrok-mcp-server 和内部文档查询（Confluence） |
 
 ### 安装步骤
 
@@ -114,14 +97,17 @@ FAE Power 依赖 whaletv-dev-power 提供的 MCP 工具。请先确认：
 3. 在 Powers 面板中点击 "Add Power"
 4. 选择 "From GitHub URL"
 5. 输入仓库地址：
+
 ```
 https://github.com/KK-Irving/fae-power
 ```
+
 6. 点击确认，等待安装完成
 
 #### Step 3：验证安装
 
 在 Kiro 对话中输入：
+
 ```
 客户反馈 YouTube 播放黑屏
 ```
@@ -132,7 +118,7 @@ https://github.com/KK-Irving/fae-power
 
 安装配置完成后，在 Kiro 对话中直接使用自然语言触发：
 
-```
+```bash
 # 技术问答
 "客户反馈 WiFi 频繁断连，如何排查？"
 "HDMI CEC 唤醒失败可能是什么原因？"
@@ -162,120 +148,71 @@ https://github.com/KK-Irving/fae-power
 "新问题接入"
 "下一步"
 
-# 知识库
+# 知识库/文档查询
 "搜索类似的历史问题：HDMI CEC 唤醒失败"
 "有没有遇到过类似问题？"
+"搜索文档"
 ```
 
-## 与 whaletv-dev-power 的关系
+## 外部系统集成
 
 ```
-┌─────────────────────────────────────────────────────┐
-│  whaletv-dev-power                                   │
-│  ├── zmind-mcp-server (14 tools) ← FAE Power 调用   │
-│  ├── opengrok-mcp-server (2 tools) ← FAE Power 调用 │
-│  └── steering/ (PR/CR/Cherry-Pick — 开发者用)        │
-└─────────────────────────────────────────────────────┘
-         ↑ 提供 MCP 工具能力
+┌─────────────────────────────────────────────────────────┐
+│  fae-power (本项目)                                      │
+│  └── steering/ (8 个模块化 steering files)               │
+│      - 技术问答、完整性检查、日志指导                      │
+│      - 工单管理、客户沟通、风险评估                        │
+│      - 工作流编排、MCP 集成规则                           │
+└─────────────────────────────────────────────────────────┘
          │
-┌─────────────────────────────────────────────────────┐
-│  fae-power (本项目)                                   │
-│  └── steering/fae-skill.md (FAE 行为指导)            │
-│      - 技术问答、完整性检查、日志指导                   │
-│      - 工单管理、客户沟通、风险评估                     │
-│      - 工作流编排、知识库集成                          │
-└─────────────────────────────────────────────────────┘
+         ↓ 调用 MCP 工具 + 内部文档查询
+┌─────────────────────────────────────────────────────────┐
+│  whaletv-dev-power                                       │
+│  ├── zmind-mcp-server (14 tools) ← FAE Power 调用       │
+│  ├── opengrok-mcp-server (2 tools) ← FAE Power 调用     │
+│  └── internal-docs skill (Confluence CQL) ← 文档查询    │
+└─────────────────────────────────────────────────────────┘
 ```
-
-**分工：**
-- `whaletv-dev-power` = **工具层 + 开发者工作流**（提供 Zmind/Gerrit/Docs 能力）
-- `fae-power` = **FAE 行为层**（指导 AI 如何为 FAE 工程师服务）
-
-两者同时安装时，AI 自动组合能力。
-
-## 优雅降级
-
-当依赖的 MCP 服务不可用时，Power 会自动降级而非报错：
-
-| 服务不可用 | 降级行为 |
-|-----------|----------|
-| zmind-mcp-server | 生成工单内容但不提交，提供本地保存格式 |
-| zmind-knowledge-manager | 使用内置知识提供技术指导，跳过历史问题引用 |
-| opengrok-mcp-server | 跳过代码搜索，基于子系统知识提供指导 |
-
-## 开发
-
-### 环境搭建
-
-```bash
-git clone https://github.com/KK-Irving/fae-power.git
-cd fae-power
-npm install
-```
-
-### 运行测试
-
-```bash
-# 运行所有测试
-npm test
-
-# 运行单元测试
-npm run test:unit
-
-# 运行属性测试
-npm run test:property
-
-# 运行集成测试
-npm run test:integration
-
-# 监听模式
-npm run test:watch
-```
-
-### 编译检查
-
-```bash
-npm run build
-```
-
-### 工具模块说明
-
-| 模块 | 文件 | 功能 |
-|------|------|------|
-| 类型定义 | `src/types/index.ts` | 13 接口 + 7 联合类型，全项目共享 |
-| 完整性检查 | `src/utils/completeness-checker.ts` | 字段验证、评分计算、缺失字段识别 |
-| 风险评估 | `src/utils/risk-assessor.ts` | 7 因素评估、P0-P4 分级、规避方案调整 |
-| 标题生成 | `src/utils/title-generator.ts` | Zmind 工单标题格式化（200 字符限制） |
-| 工单验证 | `src/utils/ticket-validator.ts` | 7 必填字段验证、描述模板生成 |
-| 工作流状态 | `src/utils/workflow-state.ts` | 12 阶段状态机（前进/跳过/回退） |
-| 响应验证 | `src/utils/response-validator.ts` | 双语输出、Q&A 结构、知识条目验证 |
-
-### 正确性属性（18 个）
-
-项目定义了 18 个形式化正确性属性，使用 [fast-check](https://github.com/dubzzz/fast-check) 进行属性测试：
-
-| 属性范围 | 覆盖内容 |
-|---------|---------|
-| Property 1-2 | 完整性字段识别与评分计算 |
-| Property 3 | 双语输出结构 |
-| Property 4-6 | 工单标题格式与长度 |
-| Property 7 | 沟通类型章节完整性 |
-| Property 8-11 | 风险评估分级与调整 |
-| Property 12-14 | 技术问答响应结构 |
-| Property 15-16 | 工作流状态转换 |
-| Property 17-18 | 知识条目结构与搜索限制 |
-
-详见 `.kiro/specs/fae-skill/design.md` 中的 Correctness Properties 章节。
 
 ## 技术栈
 
 | 技术 | 用途 |
 |------|------|
-| TypeScript (ES2020) | 工具模块实现 |
+| Kiro Steering (Markdown) | AI 工作流定义（8 个模块化文件） |
+| MCP (Model Context Protocol) | 外部工具集成协议 |
+| TypeScript (ES2020) | 逻辑验证模块（dev/） |
 | Vitest | 测试框架 |
 | fast-check | 属性测试（Property-Based Testing） |
-| Kiro Steering | AI 工作流定义 |
-| MCP (Model Context Protocol) | 外部工具集成协议 |
+
+## 与 whaletv-dev-power 的关系
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                        Kiro IDE                               │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌─────────────────────┐     ┌─────────────────────────┐    │
+│  │  whaletv-dev-power  │     │  fae-power              │    │
+│  │  ─────────────────  │     │  ─────────────────────  │    │
+│  │  面向: 开发者        │     │  面向: FAE 工程师       │    │
+│  │  能力:              │     │  能力:                  │    │
+│  │  · Zmind 工单 CRUD  │◄────│  · 技术问答 (13子系统)  │    │
+│  │  · OpenGrok 代码搜索│◄────│  · 完整性检查           │    │
+│  │  · PR/CR 工作流     │     │  · 日志收集指导         │    │
+│  │  · Cherry-Pick      │     │  · 风险评估 P0-P4      │    │
+│  │  · 内部文档查询     │◄────│  · 客户沟通生成         │    │
+│  │    (Confluence CQL) │     │  · 工作流编排 (12阶段)  │    │
+│  │                     │     │  · 文档/知识查询        │    │
+│  └─────────────────────┘     └─────────────────────────┘    │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**分工：**
+- `whaletv-dev-power` = **工具层 + 开发者工作流**（提供 Zmind/OpenGrok/Confluence 能力）
+- `fae-power` = **FAE 行为层**（指导 AI 如何为 FAE 工程师服务）
+
+两者同时安装时，AI 自动组合能力，实现从问题接收到知识查询的完整闭环。
 
 ## Roadmap
 
@@ -288,7 +225,8 @@ npm run build
 - [x] 客户沟通生成（6 场景）
 - [x] 风险评估（P0-P4）
 - [x] 工作流编排（12 阶段）
-- [x] 知识库集成
+- [x] 文档/知识查询
+- [x] 模块化 Steering 架构（8 文件拆分）
 
 ### 🔜 Phase 2（计划中）
 
@@ -312,14 +250,14 @@ npm run build
 
 欢迎 FAE 团队成员贡献：
 
-- 补充子系统的排查经验到 steering file
-- 添加新的沟通模板
-- 完善日志收集命令（适配不同平台）
-- 提交 property-based tests
-- 沉淀已解决问题到知识库
+- 补充子系统的排查经验到对应 steering file
+- 添加新的沟通模板到 `communication-generator.md`
+- 完善日志收集命令（适配不同平台）到 `log-advisor.md`
+- 提交 property-based tests 到 `dev/tests/`
+- 沉淀已解决问题到内部文档（Confluence）
 
 ## License
 
-⚠️ **UNLICENSED** — 本项目为 WhaleTV / Zeasn 内部专有软件，仅限内部使用。
+> ⚠️ **UNLICENSED** — 本项目为 WhaleTV / Zeasn 内部专有软件，仅限内部使用。
 
 未经授权，禁止复制、分发、修改或以任何形式对外使用本软件。详见 [LICENSE](./LICENSE) 文件。
